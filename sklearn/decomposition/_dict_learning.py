@@ -637,7 +637,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
 
-        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+        (U^*, V^*) = argmin 0.5 || X - U V ||_F^2 + alpha * || U ||_1,1
                      (U,V)
                      with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1137,7 +1137,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     Solves the optimization problem::
 
-        (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+        (U^*,V^*) = argmin 0.5 || X - U V ||_F^2 + alpha * || U ||_1,1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1367,7 +1367,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     Solves the optimization problem::
 
-       (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || X - U V ||_F^2 + alpha * || U ||_1,1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
