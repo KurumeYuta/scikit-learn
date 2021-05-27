@@ -230,7 +230,7 @@ problem solved is a PCA problem (dictionary learning) with an
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_{\test{F}}^2+\alpha||V||_1,1 \\
+                ||X-UV||_{\text{F}}^2+\alpha||V||_{1,1} \\
                 \text{subject to } & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{components}
 
@@ -510,7 +510,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_{\test{F}}^2+\alpha||V||_1,1 \\
+                ||X-UV||_{\text{F}}^2+\alpha||V||_{1,1} \\
                 \text{subject to } & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
