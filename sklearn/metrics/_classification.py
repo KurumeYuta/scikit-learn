@@ -1467,13 +1467,19 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                                       sample_weight=sample_weight,
                                       labels=labels, samplewise=samplewise)
     tp_sum = MCM[:, 1, 1]
+    tn_sum = MCM[:, 0, 0]
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
+    actu_sum = tn_sum + MCM[:, 0, 1]
+    false_sum = tn_sum + MCM[:, 1, 0]
+
 
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
+    #    actu_sum = np.array([actu_sum.sum()])
+    #    false_sum = np.array([false_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta ** 2
@@ -1484,6 +1490,10 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                             'predicted', average, warn_for, zero_division)
     recall = _prf_divide(tp_sum, true_sum, 'recall',
                          'true', average, warn_for, zero_division)
+    specificity = _prf_divide(tn_sum, actu_sum, 'specificity',
+                         'actual', average, warn_for, zero_division)
+    npv = _prf_divide(tn_sum, false_sum, 'npv',
+                         'false', average, warn_for, zero_division)
 
     # warn for f-score only if zero_division is warn, it is in warn_for
     # and BOTH prec and rec are ill-defined
@@ -1537,7 +1547,7 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
         f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
 
-    return precision, recall, f_score, true_sum
+    return precision, recall, f_score, true_sum, specificity, npv
 
 
 def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
@@ -1991,7 +2001,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
 
     headers = ["precision", "recall", "f1-score", "support"]
     # compute per-class results without averaging
-    p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
+    p, r, f1, s, sp, np = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
                                                   sample_weight=sample_weight,
@@ -2028,7 +2038,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
             line_heading = average + ' avg'
 
         # compute averages with specified averaging method
-        avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
+        avg_p, avg_r, avg_f1, _, _, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
             average=average, sample_weight=sample_weight,
             zero_division=zero_division)
