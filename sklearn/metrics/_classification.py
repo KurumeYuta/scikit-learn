@@ -1190,7 +1190,7 @@ def fbeta_score(y_true, y_pred, *, beta, labels=None, pos_label=1,
     array([0.71..., 0.        , 0.        ])
     """
 
-    _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
+    _, _, f, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  beta=beta,
                                                  labels=labels,
                                                  pos_label=pos_label,
@@ -1473,13 +1473,12 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     actu_sum = tn_sum + MCM[:, 0, 1]
     false_sum = tn_sum + MCM[:, 1, 0]
 
-
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
-    #    actu_sum = np.array([actu_sum.sum()])
-    #    false_sum = np.array([false_sum.sum()])
+        actu_sum = np.array([actu_sum.sum()])
+        false_sum = np.array([false_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta ** 2
@@ -1546,6 +1545,8 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
         recall = np.average(recall, weights=weights)
         f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
+        specificity = np.average(specificity, weights=weights)
+        npv = np.average(npv, weights=weights)
 
     return precision, recall, f_score, true_sum, specificity, npv
 
@@ -1999,14 +2000,14 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
     if target_names is None:
         target_names = ['%s' % l for l in labels]
 
-    headers = ["precision", "recall", "f1-score", "support"]
+    headers = ["precision", "recall", "f1-score", "support", "specificity", "npv"]
     # compute per-class results without averaging
     p, r, f1, s, sp, np = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
                                                   sample_weight=sample_weight,
                                                   zero_division=zero_division)
-    rows = zip(target_names, p, r, f1, s)
+    rows = zip(target_names, p, r, f1, s, sp, np)
 
     if y_type.startswith('multilabel'):
         average_options = ('micro', 'macro', 'weighted', 'samples')
@@ -2025,7 +2026,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         head_fmt = '{:>{width}s} ' + ' {:>9}' * len(headers)
         report = head_fmt.format('', *headers, width=width)
         report += '\n\n'
-        row_fmt = '{:>{width}s} ' + ' {:>9.{digits}f}' * 3 + ' {:>9}\n'
+        row_fmt = '{:>{width}s} ' + ' {:>9.{digits}f}' * 5 + ' {:>9}\n'
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
         report += '\n'
@@ -2038,12 +2039,11 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
             line_heading = average + ' avg'
 
         # compute averages with specified averaging method
-        avg_p, avg_r, avg_f1, _, _, _ = precision_recall_fscore_support(
+        avg_p, avg_r, avg_f1, _, avg_sp, arg_np = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
             average=average, sample_weight=sample_weight,
             zero_division=zero_division)
-        avg = [avg_p, avg_r, avg_f1, np.sum(s)]
-
+        avg = [avg_p, avg_r, avg_f1, np.sum(s), avg_sp, arg_np]
         if output_dict:
             report_dict[line_heading] = dict(
                 zip(headers, [i.item() for i in avg]))
