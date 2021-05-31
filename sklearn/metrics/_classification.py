@@ -1303,7 +1303,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
 def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
-                                              'f-score'),
+                                              'f-score', 'specificity', 'npv'),
                                     sample_weight=None,
                                     zero_division="warn"):
     """Compute precision, recall, F-measure and support for each class.
@@ -2000,14 +2000,14 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
     if target_names is None:
         target_names = ['%s' % l for l in labels]
 
-    headers = ["precision", "recall", "f1-score", "support", "specificity", "npv"]
+    headers = ["precision", "recall", "specificity", "npv", "f1-score", "support"]
     # compute per-class results without averaging
-    p, r, f1, s, sp, np = precision_recall_fscore_support(y_true, y_pred,
+    p, r, f1, s, sp, npv = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
                                                   sample_weight=sample_weight,
                                                   zero_division=zero_division)
-    rows = zip(target_names, p, r, f1, s, sp, np)
+    rows = zip(target_names, p, r, sp, npv, f1, s)
 
     if y_type.startswith('multilabel'):
         average_options = ('micro', 'macro', 'weighted', 'samples')
@@ -2023,10 +2023,10 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         longest_last_line_heading = 'weighted avg'
         name_width = max(len(cn) for cn in target_names)
         width = max(name_width, len(longest_last_line_heading), digits)
-        head_fmt = '{:>{width}s} ' + ' {:>9}' * len(headers)
+        head_fmt = '{:>{width}s} ' + ' {:>11}' * len(headers)
         report = head_fmt.format('', *headers, width=width)
         report += '\n\n'
-        row_fmt = '{:>{width}s} ' + ' {:>9.{digits}f}' * 5 + ' {:>9}\n'
+        row_fmt = '{:>{width}s} ' + ' {:>11.{digits}f}' * 5 + ' {:>11}\n'
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
         report += '\n'
@@ -2039,21 +2039,21 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
             line_heading = average + ' avg'
 
         # compute averages with specified averaging method
-        avg_p, avg_r, avg_f1, _, avg_sp, arg_np = precision_recall_fscore_support(
+        avg_p, avg_r, avg_f1, _, avg_sp, arg_npv = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
             average=average, sample_weight=sample_weight,
             zero_division=zero_division)
-        avg = [avg_p, avg_r, avg_f1, np.sum(s), avg_sp, arg_np]
+        avg = [avg_p, avg_r, avg_sp, arg_npv, avg_f1, np.sum(s)]
         if output_dict:
             report_dict[line_heading] = dict(
                 zip(headers, [i.item() for i in avg]))
         else:
             if line_heading == 'accuracy':
                 row_fmt_accuracy = '{:>{width}s} ' + \
-                        ' {:>9.{digits}}' * 2 + ' {:>9.{digits}f}' + \
-                        ' {:>9}\n'
-                report += row_fmt_accuracy.format(line_heading, '', '',
-                                                  *avg[2:], width=width,
+                        ' {:>11.{digits}}' * 4 + ' {:>11.{digits}f}' + \
+                        ' {:>11}\n'
+                report += row_fmt_accuracy.format(line_heading, '', '', '', '',
+                                                  *avg[4:], width=width,
                                                   digits=digits)
             else:
                 report += row_fmt.format(line_heading, *avg,
